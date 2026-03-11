@@ -55,8 +55,8 @@
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPOSITORY.git
-cd YOUR_REPOSITORY
+git clone https://github.com/Farhan-Ansari-1/L0gVigil.git
+cd L0gVigil
 ```
 
 ---
