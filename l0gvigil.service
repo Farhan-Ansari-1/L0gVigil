@@ -1,0 +1,13 @@
+[Unit]
+Description=L0gVigil Intrusion Prevention System
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/farx/L0gVigli
+ExecStart=/usr/bin/python3 /home/farx/L0gVigli/l0gvigil.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
