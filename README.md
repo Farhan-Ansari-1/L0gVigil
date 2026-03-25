@@ -20,15 +20,6 @@ A powerful Intrusion Prevention System that detects, analyzes, and blocks SSH br
 
 ---
 
-# 🎬 Demo Preview
-
-<p align="center">
-<img src="docs/demo.gif" width="800"/>
-</p>
-
-> ⚠️ Replace this with a real demo GIF of your dashboard (recommended for better engagement)
-
----
 
 # 🔍 Overview
 
