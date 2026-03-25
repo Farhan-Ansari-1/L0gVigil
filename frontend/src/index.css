@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@theme {
+  --color-cyber-red: #ef4444;
+  --color-cyber-dark: #0f172a;
+}
+
+/* Custom CSS hamesha @import ke niche rahegi */
+body {
+  background-color: #020617; /* slate-950 ka hex code manually de diya taaki error na aaye */
+  color: #f1f5f9;
+  margin: 0;
+  font-family: sans-serif;
+}
+
+.glow-card {
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}

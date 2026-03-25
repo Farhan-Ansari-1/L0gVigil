@@ -5,7 +5,7 @@
 <h1 align="center">🛡️ L0gVigil – Real-time IPS & SSH Shield</h1>
 
 <p align="center">
-A lightweight Intrusion Prevention System that detects and blocks SSH brute-force attacks in real time.
+A powerful Intrusion Prevention System that detects, analyzes, and blocks SSH brute-force attacks in real time.
 </p>
 
 <p align="center">
@@ -20,135 +20,39 @@ A lightweight Intrusion Prevention System that detects and blocks SSH brute-forc
 
 ---
 
+# 🎬 Demo Preview
+
+<p align="center">
+<img src="docs/demo.gif" width="800"/>
+</p>
+
+> ⚠️ Replace this with a real demo GIF of your dashboard (recommended for better engagement)
+
+---
+
 # 🔍 Overview
 
-**L0gVigil** is a high-performance **Python-based Intrusion Prevention System (IPS)** designed to protect Linux servers from **SSH brute-force attacks**.
+**L0gVigil** is a high-performance **Python-based Intrusion Prevention System (IPS)** built to secure Linux servers against **SSH brute-force attacks**.
 
 It continuously monitors:
 
-```
+```bash
 /var/log/auth.log
 ```
 
-When repeated failed login attempts are detected, L0gVigil:
+When suspicious activity is detected, it:
 
-1. Identifies the attacking IP
-2. Blocks it instantly using **iptables / ip6tables**
-3. Sends a **Telegram alert with Geo-IP information**
-
-This allows system administrators to detect and stop attacks **within seconds**.
-
----
-
-# 🎥 Live Terminal Demo
-
-```bash
-[INFO] L0gVigil started
-[INFO] Monitoring /var/log/auth.log
-
-[ALERT] Failed SSH login detected
-IP: 45.77.12.88
-User: root
-Port: 22
-
-[WARNING] Multiple failures detected
-Attempts: 5 within 10 minutes
-
-[ACTION] Blocking IP via firewall...
-
-iptables -A INPUT -s 45.77.12.88 -j DROP
-
-[SUCCESS] Attacker blocked
-Telegram alert sent
-```
-
----
-
-# 🚀 Key Features
-
-## 🔐 Dual Stack Protection
-
-Supports both **IPv4 and IPv6** attacks using:
-
-* iptables
-* ip6tables
-
-Including protection against localhost abuse (`::1`).
-
----
-
-## 🧠 Stateful Attack Detection
-
-Uses a **Sliding Window Algorithm** to track authentication failures within a configurable time period.
-
-Example:
-
-```
-5 failed attempts within 10 minutes
-```
-
-Triggers automatic blocking.
-
----
-
-## 💾 Persistent Firewall Bans
-
-Blocked IP addresses are stored in:
-
-```
-blocked_ips.json
-```
-
-When the server restarts, L0gVigil automatically restores all bans.
-
----
-
-## 🌍 Geo-IP Intelligence
-
-Each attack alert includes:
-
-* Country
-* City
-* ISP
-
-Example:
-
-```
-Geo: Mumbai, India
-ISP: Reliance Jio
-```
-
----
-
-## 🌐 Distributed Botnet Detection
-
-Tracks **global authentication failure rates** to detect distributed attacks across multiple IP addresses.
-
----
-
-## ⚡ High Performance
-
-Uses **threading and non-blocking operations** so monitoring never slows down even under heavy attack traffic.
-
----
-
-## 🔄 Automatic Unban System
-
-Blocked IP addresses are automatically removed after a defined time.
-
-Example default:
-
-```
-24 hours
-```
-
-This keeps firewall rules clean and prevents permanent blocks.
+* Detects repeated failed login attempts
+* Identifies attacker IP address
+* Blocks the IP instantly via firewall
+* Sends real-time alerts via Telegram
+* Stores attack data for analysis
 
 ---
 
 # 🧠 System Architecture
 
-```
+```text
 ┌────────────────────┐
 │  /var/log/auth.log │
 └──────────┬─────────┘
@@ -182,18 +86,54 @@ This keeps firewall rules clean and prevents permanent blocks.
 
 ---
 
-# 📦 Installation
+# 🚀 Key Features
 
-## 1. Requirements
-
-* Linux server (Ubuntu / Debian recommended)
-* Python **3.8+**
-* iptables / ip6tables
-* sudo privileges
+* 🔐 Dual-stack protection (IPv4 + IPv6)
+* 🧠 Sliding window attack detection
+* 💾 Persistent IP blocking (SQLite + JSON)
+* 🌍 Geo-IP tracking (City, Country, ISP)
+* 🌐 Botnet detection (global fail tracking)
+* ⚡ Threaded high-performance engine
+* 🔄 Automatic unban system
+* 📊 Real-time React dashboard
 
 ---
 
-## 2. Clone Repository
+# 💻 Live Detection Example
+
+```bash
+[INFO] L0gVigil started
+[INFO] Monitoring /var/log/auth.log
+
+[ALERT] Failed SSH login detected
+IP: 45.77.12.88
+User: root
+Port: 22
+
+[WARNING] Threshold exceeded (5 attempts / 10 min)
+
+[ACTION] Blocking attacker...
+
+iptables -A INPUT -s 45.77.12.88 -j DROP
+
+[SUCCESS] IP blocked
+Telegram alert sent
+```
+
+---
+
+# 📦 Installation
+
+## 1️⃣ Requirements
+
+* Linux (Ubuntu/Debian recommended)
+* Python 3.8+
+* iptables / ip6tables
+* sudo access
+
+---
+
+## 2️⃣ Clone Repository
 
 ```bash
 git clone https://github.com/Farhan-Ansari-1/L0gVigil.git
@@ -202,7 +142,7 @@ cd L0gVigil
 
 ---
 
-## 3. Install Dependencies
+## 3️⃣ Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -212,13 +152,7 @@ pip install -r requirements.txt
 
 # ⚙️ Configuration
 
-Create a file called:
-
-```
-config.json
-```
-
-Example configuration:
+Create `config.json`:
 
 ```json
 {
@@ -240,7 +174,7 @@ Example configuration:
 
 # 🚦 Usage
 
-## Run Manually
+## Run Core Engine
 
 ```bash
 sudo python3 L0gVigil.py
@@ -248,30 +182,66 @@ sudo python3 L0gVigil.py
 
 ---
 
-## Run as Background Service
-
-Copy the service file:
+## Run Backend API
 
 ```bash
-sudo cp l0gvigil.service /etc/systemd/system/
+cd backend
+uvicorn main:app --reload
 ```
 
-Reload systemd:
+API runs at:
 
-```bash
-sudo systemctl daemon-reload
+```
+http://localhost:8000
 ```
 
-Enable service:
+---
+
+## Run Frontend Dashboard
 
 ```bash
-sudo systemctl enable --now l0gvigil
+cd frontend
+npm install
+npm run dev
 ```
 
-Check status:
+Frontend runs at:
+
+```
+http://localhost:5173
+```
+
+---
+
+# 📊 Dashboard API
+
+* `GET http://localhost:8000/attacks` → fetch recent attacks
+* `GET http://localhost:8000/stats` → fetch statistics
+* `DELETE http://localhost:8000/attacks/{id}` → remove attack
+
+---
+
+# 📂 Project Structure
 
 ```bash
-sudo systemctl status l0gvigil
+L0gVigil/
+│
+├── frontend/              # React Dashboard
+│   └── src/App.jsx
+│
+├── backend/               # FastAPI API
+│   └── main.py
+│
+├── L0gVigil.py            # Core IPS Engine
+├── config.json
+├── blocked_ips.db
+├── requirements.txt
+├── l0gvigil.service
+│
+├── docs/
+│   └── demo.gif
+│
+└── README.md
 ```
 
 ---
@@ -282,41 +252,26 @@ sudo systemctl status l0gvigil
 🚨 BRUTE FORCE DETECTED
 
 IP: 1.2.3.4
-Target: root:22
+User: root
 
 Geo: Mumbai, India
 ISP: Reliance Jio
 
-Status: IP Blocked Successfully
-```
-
----
-
-# 📂 Project Structure
-
-```
-L0gVigil
-│
-├── L0gVigil.py
-├── config.json
-├── requirements.txt
-├── blocked_ips.json
-├── l0gvigil.service
-└── README.md
+Status: Blocked Successfully
 ```
 
 ---
 
 # ⚖️ Disclaimer
 
-This tool is intended for **educational purposes and personal server hardening**.
+This project is intended for **educational and defensive security purposes only**.
 
-Always test in a **staging environment** before deploying to production systems.
-
-The author is not responsible for misuse or damage caused by improper configuration.
+* Do not use on systems you do not own
+* Always test in a staging environment
+* Use responsibly
 
 ---
 
 <p align="center">
-⭐ If you find this project useful, consider giving it a star on GitHub!
+⭐ Star this repo if you like it — and build your cyber arsenal ⚡
 </p>

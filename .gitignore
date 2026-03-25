@@ -7,3 +7,9 @@ blocked_ips.json
 
 # Configuration file
 config.json
+# SQLite Database
+*.db
+*.db-journal
+
+# Logs
+*.log

@@ -6,6 +6,7 @@ import os
 import subprocess
 import requests
 from datetime import datetime, timedelta
+import sqlite3
 import ipaddress
 from collections import defaultdict, deque
 import logging
@@ -34,8 +35,21 @@ except Exception as e:
     exit(1)
 
 file_lock = threading.Lock()
+DB_FILE = 'blocked_ips.db'
 banned_ips = {} 
 banned_ips_lock = threading.Lock()
+
+def init_db():
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute('''CREATE TABLE IF NOT EXISTS blocked_ips
+                          (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                           ip TEXT, blocked_at TEXT, geo TEXT)''')
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.error(f"DB Init Error: {e}")
 
 class SlidingWindow:
     def __init__(self, max_fails, window_minutes):
@@ -102,7 +116,7 @@ def unban_ip(ip):
         logger.error(f"Failed to unban {ip}: {e}")
         return False
 
-def block_ip(ip):
+def block_ip(ip, geo=None):
     try:
         now = datetime.now() # Fix: added variable
         ip_obj = ipaddress.ip_address(ip)
@@ -114,10 +128,15 @@ def block_ip(ip):
         with banned_ips_lock:
             banned_ips[ip] = now
             
-        log_entry = {'ip': ip, 'blocked_at': now.isoformat(), 'reason': 'brute force'}
-        with file_lock:
-            with open(BLOCKED_JSON, 'a') as f:
-                f.write(json.dumps(log_entry) + '\n')
+        try:
+            conn = sqlite3.connect(DB_FILE)
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO blocked_ips (ip, blocked_at, geo) VALUES (?, ?, ?)", 
+                           (ip, now.isoformat(), geo if geo else "N/A"))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Failed to save to DB: {e}")
         return True
     except Exception as e:
         logger.error(f"Failed to block {ip}: {e}")
@@ -138,7 +157,13 @@ def get_geo(ip):
         r = requests.get(url, headers=headers, timeout=3)
         data = r.json()
         city = data.get('city', 'N/A')
-        return f"{city}, {data.get('country', 'N/A')} | ISP: {data.get('org', 'N/A')}"
+        
+        # Handle coordinates for Map (ipinfo returns "lat,long")
+        loc = data.get('loc', '0,0').split(',')
+        # Frontend expects "Long, Lat" (Reverse of ipinfo)
+        coords = f"{loc[1] if len(loc) > 1 else 0}, {loc[0]}"
+        
+        return f"{city}, {data.get('country', 'N/A')} | {coords}"
     except: return "Geo unavailable"
 
 def send_telegram(msg):
@@ -163,16 +188,21 @@ def process_attack(ip, user, port):
     geo = get_geo(ip)
     msg = f"🚨 <b>BRUTE FORCE!</b>\nIP: {ip}\nUser: {user}\nGeo: {geo}"
     send_telegram(msg)
-    block_ip(ip)
+    block_ip(ip, geo)
 
 def restore_blocked_ips():
-    if not os.path.exists(BLOCKED_JSON): return
-    logger.info("Restoring blocks from JSON...")
-    with open(BLOCKED_JSON, 'r') as f:
-        for line in f:
+    if not os.path.exists(DB_FILE): return
+    logger.info("Restoring blocks from DB...")
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("SELECT ip FROM blocked_ips")
+        rows = cursor.fetchall()
+        conn.close()
         
+        for row in rows:
             try:
-                ip = json.loads(line)['ip']
+                ip = row[0]
                 if not is_whitelisted(ip):
                     # Check if the IP is already banned
                     with banned_ips_lock:
@@ -185,12 +215,15 @@ def restore_blocked_ips():
             except Exception as e:
                 logger.error(f"Failed to restore block for IP: {ip} - {e}")
                 continue
+    except Exception as e:
+        logger.error(f"DB Restore Error: {e}")
 
 # ... Restore function logic included in main or defined separately ...
 
 def main():
     tailer = LogTailer(LOG_FILE)
     rate_limiter = SlidingWindow(MAX_FAILS, WINDOW_MINUTES)
+    init_db()
     global_fails_tracker = deque()
     
     logger.info("L0gVigil Started. Monitoring...")
